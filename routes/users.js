@@ -1,8 +1,11 @@
+require("dotenv").config();
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const Joi = require("joi");
 const User = require("../models/users");
+const authMiddleware = require("../middleware/auth");
+const { generateToken } = require("../helper");
 
 const createUserSchema = Joi.object({
     name: Joi.string().min(3).required(),
@@ -32,13 +35,20 @@ router.post("/", async (req, res) => {
     const newUser = new User({
         name: name,
         email: email,
-        password: password,
+        password: hashedPass,
         address: address,
     });
 
     await newUser.save();
 
-    return res.status(201).json(newUser);
+    const token = generateToken(newUser);
+
+    return res.status(201).json(token);
+});
+
+router.get("/", authMiddleware, async (req, res) => {
+    const user = await User.findById(req.user._id).select("-password");
+    return res.json(user);
 });
 
 module.exports = router;

@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
 
+const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 
 mongoose
@@ -12,6 +13,7 @@ mongoose
 app.use(express.json());
 app.use(express.urlencoded());
 
+app.use("/api", authRoutes);
 app.use("/api/user", userRoutes);
 
 const PORT = process.env.PORT || 8000;
