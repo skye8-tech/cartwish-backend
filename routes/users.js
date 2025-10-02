@@ -1,4 +1,3 @@
-require("dotenv").config();
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
@@ -41,7 +40,7 @@ router.post("/", async (req, res) => {
 
     await newUser.save();
 
-    const token = generateToken(newUser);
+    const token = generateToken({ _id: newUser._id, name: newUser.name });
 
     return res.status(201).json(token);
 });

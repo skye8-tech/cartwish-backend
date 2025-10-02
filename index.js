@@ -1,3 +1,5 @@
+require("dotenv").config();
+require("./config/passport");
 const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
@@ -13,7 +15,7 @@ mongoose
 app.use(express.json());
 app.use(express.urlencoded());
 
-app.use("/api", authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 
 const PORT = process.env.PORT || 8000;
