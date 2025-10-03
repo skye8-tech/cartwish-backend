@@ -37,6 +37,7 @@ const upload = multer({
     },
 });
 
+// create a category
 router.post(
     "/",
     authMiddleware,
@@ -63,12 +64,47 @@ router.post(
     }
 );
 
-router.get("/", async (req, res) => {
-    const users = await Category.find().sort("name");
+// Get all categories
+router.get("/", authMiddleware, async (req, res) => {
+    const categories = await Category.find().sort("name");
 
     return res.status(200).json({
         message: "Success",
-        user: users,
+        categories: categories,
+    });
+});
+
+// Get a categories
+router.get("/:id", authMiddleware, async (req, res) => {
+    const category = await Category.findById(req.params.id);
+
+    return res.status(200).json({
+        message: "Success",
+        category: category,
+    });
+});
+
+// Update a category // name and image are a must
+router.put("/:id", authMiddleware, checkRole("admin"), async (req, res) => {
+    if (!req.body.name) {
+        return res.status(400).json({ message: "Name is required!" });
+    }
+
+    await Category.findByIdAndUpdate(req.params.id, {
+        $set: { name: req.body.name },
+    });
+
+    res.status(200).json({
+        message: "Category updated successfully",
+    });
+});
+
+// Delete a category
+router.delete("/:id", authMiddleware, checkRole("admin"), async (req, res) => {
+    await Category.findByIdAndDelete(req.params.id);
+
+    return res.status(200).json({
+        message: "Success",
     });
 });
 
