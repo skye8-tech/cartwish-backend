@@ -16,6 +16,7 @@ mongoose
 
 app.use(express.json());
 app.use(express.urlencoded());
+app.use("/upload/category", express.static("upload/category"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);

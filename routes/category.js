@@ -53,4 +53,13 @@ router.post("/", upload.single("icon"), async (req, res) => {
     });
 });
 
+router.get("/", async (req, res) => {
+    const users = await Category.find().sort("name");
+
+    return res.status(200).json({
+        message: "Success",
+        user: users,
+    });
+});
+
 module.exports = router;
