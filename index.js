@@ -24,13 +24,22 @@ app.use("/api/user", userRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/products", productRoutes);
 
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-    // List all endponts
+const listAllRoutes = () => {
     console.log("All Available Endpoints");
+    console.log("<----- auth endpoints ----->");
     expressListRoutes(authRoutes, { prefix: "/api/auth" });
+    console.log("<----- user endpoints ----->");
     expressListRoutes(userRoutes, { prefix: "/api/user" });
+    console.log("<----- category endpoints ----->");
     expressListRoutes(categoryRoutes, { prefix: "/api/category" });
+    console.log("<----- products endpoints ----->");
     expressListRoutes(productRoutes, { prefix: "/api/product" });
     console.log(`Server is listening on port ${PORT}...`);
+};
+
+const PORT = process.env.PORT || 8000;
+const server = app.listen(PORT, () => {
+    if (process.env.ROUTE_LIST == 1) {
+        listAllRoutes();
+    }
 });
