@@ -18,7 +18,11 @@ router.post("/login", async (req, res) => {
 
     const result = await bcrypt.compare(password, user.password);
     if (result) {
-        const token = generateToken({ _id: user._id, name: user.name });
+        const token = generateToken({
+            _id: user._id,
+            name: user.name,
+            role: user.role,
+        });
         user.password = undefined;
         user.role = undefined;
         user.__v = undefined;
@@ -95,7 +99,11 @@ const handleOAuthCallback = async (profile, providerId) => {
         await user.save();
     }
     // generate token
-    const token = generateToken({ _id: user._id, name: user.name });
+    const token = generateToken({
+        _id: user._id,
+        name: user.name,
+        role: user.role,
+    });
 
     return { user: user, token: token };
 };

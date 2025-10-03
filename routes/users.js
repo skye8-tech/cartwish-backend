@@ -40,7 +40,11 @@ router.post("/", async (req, res) => {
 
     await newUser.save();
 
-    const token = generateToken({ _id: newUser._id, name: newUser.name });
+    const token = generateToken({
+        _id: newUser._id,
+        name: newUser.name,
+        role: newUser.role,
+    });
 
     return res.status(201).json(token);
 });

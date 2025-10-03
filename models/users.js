@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     googleId: { type: String, unique: true },
     facebookId: { type: String, unique: true },
     address: { type: String, required: false },
-    role: { type: String, enum: ["user", "admin"], default: "user" },
+    role: { type: String, enum: ["user", "seller", "admin"], default: "user" },
 });
 
 const User = mongoose.model("User", userSchema);

@@ -8,6 +8,7 @@ const app = express();
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const categoryRoutes = require("./routes/category");
+const productRoutes = require("./routes/products");
 
 mongoose
     .connect("mongodb://localhost:27017/cartwish")
@@ -21,6 +22,7 @@ app.use("/upload/category", express.static("upload/category"));
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/category", categoryRoutes);
+app.use("/api/products", productRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
@@ -29,5 +31,6 @@ app.listen(PORT, () => {
     expressListRoutes(authRoutes, { prefix: "/api/auth" });
     expressListRoutes(userRoutes, { prefix: "/api/user" });
     expressListRoutes(categoryRoutes, { prefix: "/api/category" });
+    expressListRoutes(productRoutes, { prefix: "/api/product" });
     console.log(`Server is listening on port ${PORT}...`);
 });

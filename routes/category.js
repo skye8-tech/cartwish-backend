@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const Category = require("../models/category");
+const checkRole = require("../middleware/checkRole");
+const authMiddleware = require("../middleware/auth");
 
 // Filters for image file uploads
 const storage = multer.diskStorage({
@@ -35,23 +37,31 @@ const upload = multer({
     },
 });
 
-router.post("/", upload.single("icon"), async (req, res) => {
-    if (!req.body.name || !req.file) {
-        return res.status(400).json({ message: "Name and icon are required" });
+router.post(
+    "/",
+    authMiddleware,
+    checkRole("admin"),
+    upload.single("icon"),
+    async (req, res) => {
+        if (!req.body.name || !req.file) {
+            return res
+                .status(400)
+                .json({ message: "Name and icon are required" });
+        }
+
+        const newCategory = new Category({
+            name: req.body.name,
+            image: req.file.filename,
+        });
+
+        await newCategory.save();
+
+        res.status(201).json({
+            message: "Category added successfully",
+            category: newCategory,
+        });
     }
-
-    const newCategory = new Category({
-        name: req.body.name,
-        image: req.file.filename,
-    });
-
-    await newCategory.save();
-
-    res.status(201).json({
-        message: "Category added successfully",
-        category: newCategory,
-    });
-});
+);
 
 router.get("/", async (req, res) => {
     const users = await Category.find().sort("name");
