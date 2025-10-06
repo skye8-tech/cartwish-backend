@@ -3,6 +3,7 @@ const authMiddleware = require("../middleware/auth");
 const checkRole = require("../middleware/checkRole");
 const multer = require("multer");
 const Product = require("../models/products");
+const Category = require("../models/category");
 const router = express.Router();
 
 // Filters for image file uploads
@@ -85,13 +86,39 @@ router.post(
 );
 
 router.get("/", async (req, res) => {
-    const products = await Product.find()
+    // pagination
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.perPage) || 8;
+
+    const queryCategory = req.query.category || null;
+    const querySearch = req.query.search || null;
+
+    let query = {};
+    if (queryCategory) {
+        const category = await Category.findOne({ name: queryCategory });
+
+        if (!category) {
+            return res.status(404).json({ message: "Category not found!" });
+        }
+
+        query.category = category._id;
+    }
+
+    if (querySearch) {
+        query.title = { $regex: querySearch, $options: "i" };
+    }
+
+    // Pagination
+    const products = await Product.find(query)
         .select("-description -seller -category -__v")
+        .skip((page - 1) * perPage)
+        .limit(perPage)
         .lean();
 
+    // Adding review details
     const updatedProducts = products.map((product) => {
-        const numberOfReviews = product.review.length;
-        const sumOfRatings = product.review.reduce(
+        const numberOfReviews = product.reviews.length;
+        const sumOfRatings = product.reviews.reduce(
             (sum, review) => sum + review.rating,
             0
         );
@@ -104,6 +131,17 @@ router.get("/", async (req, res) => {
         };
     });
 
-    res.json(updatedProducts);
+    console.log(query);
+    // Adding data needed by the frontend
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / perPage);
+
+    res.json({
+        products: updatedProducts,
+        totalProducts,
+        totalPages,
+        currentPage: page,
+        postPerPage: perPage,
+    });
 });
 module.exports = router;
