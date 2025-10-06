@@ -2,6 +2,9 @@ const express = require("express");
 const authMiddleware = require("../middleware/auth");
 const checkRole = require("../middleware/checkRole");
 const multer = require("multer");
+const fs = require("fs/promises");
+const path = require("path");
+const User = require("../models/users");
 const Product = require("../models/products");
 const Category = require("../models/category");
 const router = express.Router();
@@ -144,4 +147,72 @@ router.get("/", async (req, res) => {
         postPerPage: perPage,
     });
 });
+
+router.get("/suggestions", async (req, res, next) => {
+    const search = req.query.search;
+
+    const products = await Product.find({
+        title: { $regex: search, $options: "i" },
+    })
+        .select("_id title")
+        .limit(10);
+
+    res.json(products);
+});
+
+router.get("/:id", async (req, res) => {
+    const id = req.params.id;
+
+    // fetch product with seller of product and product reviews
+    const product = await Product.findById(id)
+        .populate("seller", "_id name email")
+        .populate("reviews.user", "_id name email")
+        .select("-category -__v");
+
+    if (!product) {
+        return res.status(404).json({ message: "Product not found!" });
+    }
+
+    res.json({ product });
+});
+
+router.delete("/:id", authMiddleware, async (req, res) => {
+    const productId = req.params.id;
+
+    const product = await Product.findById(productId).select("seller images");
+
+    if (!product) {
+        return res.status(404).json({ message: "Product not found!" });
+    }
+
+    if (
+        req.user.role === "admin" ||
+        req.user._id.toString() === product.seller.toString()
+    ) {
+        // the actual deleting is disabled here
+        // await product.deleteOne();
+
+        // if (product.images && product.images.length > 0) {
+        //     product.images.forEach(async (imageName) => {
+        //         const fullPath = path.join(
+        //             __dirname,
+        //             "../upload/products",
+        //             imageName
+        //         );
+        //         try {
+        //             await fs.unlink(fullPath);
+        //         } catch (err) {
+        //             console.error(`Error deletign file: ${fullPath}`, err);
+        //         }
+        //     });
+        // }
+
+        return res.json({ message: "Product delete successfully!" });
+    }
+
+    return res.status(403).json({
+        message: "Access denied: Only admin or seller can delete this product!",
+    });
+});
+
 module.exports = router;
