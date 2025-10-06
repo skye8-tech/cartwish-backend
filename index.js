@@ -1,4 +1,6 @@
-require("dotenv").config();
+require("dotenv").config({
+    quiet: true,
+});
 require("./config/passport");
 require("winston-mongodb");
 const express = require("express");
@@ -24,17 +26,39 @@ const logger = winston.createLogger({
             filename: "logs/errors.log",
             level: "error",
         }),
-        new winston.transports.MongoDB({
-            db: "mongodb://localhost:27017/cartwish",
-            level: "error",
-        }),
+        // new winston.transports.MongoDB({
+        //     db: "mongodb://localhost:27017/cartwish",
+        //     level: "error",
+        // }),
     ],
+});
+
+process.on("uncaughtException", async (err) => {
+    logger.error("Uncaugth Exception", err);
+    logger.on("finish", () => {
+        process.exit(1);
+    });
+    logger.end();
+});
+
+process.on("unhandledRejection", async (err) => {
+    logger.error("Unhandled Promise Rejection", err);
+    logger.on("finish", () => {
+        process.exit(1);
+    });
+    logger.end();
 });
 
 mongoose
     .connect("mongodb://localhost:27017/cartwish")
-    .then(() => console.log("MongoDB Connected\n"))
-    .catch((err) => console.log("MongoDB Connection Failed"));
+    .then(() => logger.info("MongoDB Connected\n"))
+    .catch((err) => {
+        logger.error("MongoDB Connection Failed", err);
+        logger.on("finish", () => {
+            process.exit(1);
+        });
+        logger.end();
+    });
 
 app.use(express.json());
 app.use(express.urlencoded());
