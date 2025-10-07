@@ -36,18 +36,15 @@ router.post("/:productId", authMiddleware, async (req, res) => {
     }
 
     // Check if the product is already in the cart
-    let existingProductIndex = cart.products.findIndex(
+    let existingindex = cart.products.findIndex(
         (product) => product.productId.toString() === productId.toString()
     );
 
-    if (existingProductIndex !== -1) {
-        if (
-            cart.products[existingProductIndex].quantity + quantity >=
-            product.stock
-        ) {
+    if (existingindex !== -1) {
+        if (cart.products[existingindex].quantity + quantity >= product.stock) {
             return res.status(400).json({ message: "Stock is not enough!" });
         }
-        cart.products[existingProductIndex].quantity += quantity;
+        cart.products[existingindex].quantity += quantity;
     } else {
         cart.products.push({
             productId: productId,
@@ -119,11 +116,11 @@ const crementQuantity = async (
     }
 
     // find the product in the products array
-    let productIndex = cart.products.findIndex(
+    let index = cart.products.findIndex(
         (product) => product.productId.toString() === productId.toString()
     );
 
-    if (productIndex === -1) {
+    if (index === -1) {
         return res
             .status(404)
             .json({ message: "Product not found in the cart!" });
@@ -133,10 +130,7 @@ const crementQuantity = async (
     let value = 0;
     if (option === "increase") {
         // Check if quantity number is at limit(stock)
-        if (
-            product_stock &&
-            cart.products[productIndex].quantity === product_stock
-        ) {
+        if (product_stock && cart.products[index].quantity === product_stock) {
             return res.status(400).json({
                 message:
                     "Product run out of stock, can't increase product by one!",
@@ -146,16 +140,16 @@ const crementQuantity = async (
         value = 1;
     }
     if (option === "decrease") {
-        if (cart.products[productIndex].quantity > 1) {
+        if (cart.products[index].quantity > 1) {
             // set decrement
             value = -1;
         } else {
             // Update totalProducts & totalCartPrice
             cart.totalProducts -= 1;
-            cart.totalCartPrice -= cart.products[productIndex].price;
+            cart.totalCartPrice -= cart.products[index].price;
 
             // remove complete product object
-            cart.products.splice(productIndex, 1);
+            cart.products.splice(index, 1);
 
             // save the updated cart
             await cart.save();
@@ -168,14 +162,13 @@ const crementQuantity = async (
     }
 
     // increase the product quantity
-    cart.products[productIndex].quantity += value;
+    cart.products[index].quantity += value;
 
     // update totalProducts & totalCartPrice
     cart.totalProducts += value;
 
-    cart.products[productIndex].totalPrice +=
-        cart.products[productIndex].price * value;
-    cart.totalCartPrice += cart.products[productIndex].price * value;
+    cart.products[index].totalPrice += cart.products[index].price * value;
+    cart.totalCartPrice += cart.products[index].price * value;
 
     // save the updated cart
     await cart.save();
@@ -185,4 +178,51 @@ const crementQuantity = async (
         cart: cart,
     });
 };
+
+router.delete("/remove/:productId", authMiddleware, async (req, res) => {
+    const productId = req.params.productId;
+
+    // find the product
+    const product = await Product.findById(productId);
+    if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+    }
+
+    // find the current user cart
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+        return res.status(404).json({ message: "User cart is empty!" });
+    }
+
+    // find the product in the products array
+    let index = cart.products.findIndex(
+        (product) => product.productId.toString() === productId.toString()
+    );
+
+    if (index === -1) {
+        return res
+            .status(404)
+            .json({ message: "Product not found in the cart!" });
+    }
+
+    if (
+        cart.products.length === 1 &&
+        cart.products[index].productId.toString() === productId
+    ) {
+        await Cart.findByIdAndDelete(cart._id);
+        return res.json({ message: "Cart removed successfully!", cart: cart });
+    }
+
+    // splice the product from the cart.products
+    const removedProduct = cart.products.splice(index, 1)[0];
+
+    // update cart total products and price
+    cart.totalProducts -= removedProduct.quantity;
+    cart.totalCartPrice -= removedProduct.totalPrice;
+
+    await cart.save();
+
+    res.json({ message: "Product removed successfully!", cart: cart });
+});
+
 module.exports = router;
