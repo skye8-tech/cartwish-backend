@@ -13,6 +13,7 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const categoryRoutes = require("./routes/category");
 const productRoutes = require("./routes/products");
+const cartRoutes = require("./routes/cart");
 
 const logger = winston.createLogger({
     level: "info",
@@ -69,6 +70,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
 
 app.use((error, req, res, next) => {
     logger.error(error.message, {
@@ -89,6 +91,8 @@ const listAllRoutes = () => {
     expressListRoutes(categoryRoutes, { prefix: "/api/category" });
     console.log("<----- products endpoints ----->");
     expressListRoutes(productRoutes, { prefix: "/api/product" });
+    console.log("<----- carts endpoints ----->");
+    expressListRoutes(cartRoutes, { prefix: "/api/cart" });
 };
 
 const PORT = process.env.PORT || 8000;
